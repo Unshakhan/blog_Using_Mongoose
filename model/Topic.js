@@ -5,6 +5,7 @@ const topicSchema = new mongoose.Schema({
         lowercase : true
     },
     desc: String
-})
+},
+{timestamps:true} )
 
 module.exports = mongoose.model("Topic", topicSchema);

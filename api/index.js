@@ -26,18 +26,34 @@ app.get("/topics", async (req, res) => {
   res.json(topics);
 });
 
-app.post("/topics", async (req, res) => {
-  const {name, desc } = req.body;
+app.post("/topic", async (req, res) => {
+
+  try {
+    //For array of obj
+    if(Array.isArray(req.body)){
+            for (const item of req.body) {
+
+        if (!item.name || !item.desc) {
+          return res.status(400).json({
+            message: "All fields are required"
+          });
+        }
+
+      }
+      const Topics = await Topic.insertMany(req.body)
+       res.status(201).json(Topics);
+    }else{
+       const {name, desc } = req.body;
   if (!name || !desc) {
     return res.status(400).json({
       message: "All fields are required"
     });
   }
-
-  try {
-    const newTopic = new Topic({ name, desc });
+//for single obj
+  const newTopic = new Topic({ name, desc });
     await newTopic.save();
     res.status(201).json(newTopic);
+    }
   } catch (error) {
     res.status(500).json({
       message: "Error creating topic"
@@ -46,7 +62,6 @@ app.post("/topics", async (req, res) => {
 });
 
 // 🔍 PARAMS SEARCH (MAIN IMPORTANT PART)
-//: iska mutlub param jo url me diya jayega, usko hum req.params se access kar sakte hain
 app.get("/topic/:name", async (req, res) => {
   const name = req.params.name.toLowerCase();
   const foundTopic = await Topic.findOne({ name: name });
@@ -61,21 +76,69 @@ app.get("/topic/:name", async (req, res) => {
   res.json(foundTopic);
 });
 
+app.put("/topic/:id", async(req,res)=>{
+ try{ const {id} = req.params
+const {name, desc} = req.body
+const updateTopic = await Topic.findByIdAndUpdate(
+  id,
+  {name, desc},
+ { returnDocument: "after" }
+)
+if(!updateTopic){
+  return res.status(404).json({
+    "message":"id not match "
+  })
+}
+res.status(200).json(updateTopic)}
+catch(err){
+   res.status(500).json({
+      message: "Error updating topic"
+})}
+})      
 
-// 🔍 OPTIONAL: SEARCH BY ID (extra impress feature)
-app.get("/topic/id/:id", async (req, res) => {
-  const id = req.params.id
+app.delete("/topic/:id", async(req,res)=>{
+  try {
+     const {id} = req.params
+// const {name, desc} = req.body
+const deletedTopic = await Topic.findByIdAndDelete(id)
+console.log("deletedTopic ------------>" , deletedTopic);
 
-  const found = await Topic.findById(id)
+  if (!deletedTopic) {
+      return res.status(404).json({
+        message: "Topic not found"
+      });
+    }
 
-  if (!found) {
-    return res.status(404).json({
-      message: "Topic not found"
+    res.status(200).json({
+      message: "Topic deleted successfully",
+      deletedTopic
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      message: "Error deleting topic"
     });
   }
+})
+//OR
+// 🔍 OPTIONAL: SEARCH BY ID (extra impress feature)
+// app.get("/topic/id/:id", async (req, res) => {
+//   const id = req.params.id
 
-  res.json(found);
-});
+//   const found = await Topic.findById(id)
+
+//   if (!found) {
+//     return res.status(404).json({
+//       message: "Topic not found"
+//     });
+//   }
+
+//   res.json(found);
+// });
 
 
-module.exports = app;
+// module.exports = app;
+const PORT = process.env.PORT
+
+export default app;
+
