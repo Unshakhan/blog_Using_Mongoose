@@ -6,15 +6,21 @@ const dotenv = require('dotenv');
 dotenv.config();
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URL)
-.then(()=>{
-    console.log("Connected to MongoDB");
-})
-.catch((err)=>{
-    console.error("Error connecting to MongoDB:", err);
-})
+let isConnected = false;
 
-// ✅ HOME ROUTE
+const connectDB = async () => {
+  if (isConnected) return;
+
+  await mongoose.connect(process.env.MONGO_URL);
+  isConnected = true;
+  console.log("DB Connected");
+};
+
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
 app.get("/",  (req, res) => {
   res.send("Backend API is running...");
 });
@@ -140,5 +146,5 @@ console.log("deletedTopic ------------>" , deletedTopic);
 // module.exports = app;
 const PORT = process.env.PORT
 
-export default app;
+export default app
 
